@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
-import axios from 'axios';
 import * as Papa from 'papaparse';
 ChartJS.register(...registerables);
 
@@ -16,11 +15,12 @@ const App = () => {
   const [selectedDataIndex, setSelectedDataIndex] = useState(null);
   const [isLegendClick, setIsLegendClick] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const chartRef = useRef(null);
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/chart/generate';
+  const BACKEND_URL = 'http://localhost:5000/api/chart/generate';
 
   const distinctColors = [
     '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6',
@@ -45,11 +45,23 @@ const App = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(BACKEND_URL, {
-        message: message || 'Generate chart from uploaded data',
-        data: uploadedData,
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message || 'Generate chart from uploaded data',
+          data: uploadedData,
+        }),
       });
-      const config = response.data.config;
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate chart');
+      }
+      
+      const data = await response.json();
+      const config = data.config;
       setChartConfig(config);
       setMessages((prev) => [...prev, { role: 'bot', content: 'Chart generated successfully!' }]);
     } catch (error) {
@@ -301,16 +313,70 @@ export default MyChart;
                     />
                   </div>
                   
-                  <label className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-gray-500 to-gray-600 rounded-xl cursor-pointer hover:from-gray-600 hover:to-gray-700 transition-all duration-300 transform hover:scale-105 shadow-md">
-                    <div className="w-5 h-5 text-white font-bold flex items-center justify-center">📁</div>
-                    <input
-                      type="file"
-                      accept=".json,.csv"
-                      onChange={handleFileUpload}
-                      ref={fileInputRef}
-                      className="hidden"
-                    />
-                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <div
+                        className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full cursor-pointer hover:from-blue-500 hover:to-indigo-500 transition-all duration-300 transform hover:scale-110 shadow-sm"
+                        onMouseEnter={() => setShowInfoTooltip(true)}
+                        onMouseLeave={() => setShowInfoTooltip(false)}
+                      >
+                        <div className="w-3 h-3 text-white font-bold text-xs flex items-center justify-center">ℹ️</div>
+                      </div>
+                      
+                      {showInfoTooltip && (
+                        <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white p-3 rounded-lg shadow-xl z-50 w-80 text-xs">
+                          <div className="mb-2">
+                            <div className="font-semibold text-blue-300 mb-1">JSON Structure:</div>
+                            <div className="bg-gray-800 p-2 rounded text-xs font-mono leading-tight">
+                              {`{
+  "labels": ["Cat1", "Cat2", "Cat3", "..."],
+  "datasets": [
+    {
+      "label": "Dataset1",
+      "data": [val1, val2, val3, ...],
+      "backgroundColor": "#hexcode1"
+    },
+    {
+      "label": "Dataset2", 
+      "data": [val1, val2, val3, ...],
+      "backgroundColor": "#hexcode2"
+    }
+  ],
+  "options": {
+    "responsive": true,
+    "plugins": {
+      "legend": { "position": "top" },
+      "title": { "display": true, "text": "Title" }
+    }
+  }
+}`}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-green-300 mb-1">CSV Structure:</div>
+                            <div className="bg-gray-800 p-2 rounded text-xs font-mono leading-tight">
+                              {`,Label1,Label2,Label3,...
+Dataset1,val1,val2,val3,...
+Dataset2,val1,val2,val3,...
+...`}
+                            </div>
+                          </div>
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <label className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-gray-500 to-gray-600 rounded-xl cursor-pointer hover:from-gray-600 hover:to-gray-700 transition-all duration-300 transform hover:scale-105 shadow-md">
+                      <div className="w-5 h-5 text-white font-bold flex items-center justify-center">📁</div>
+                      <input
+                        type="file"
+                        accept=".json,.csv"
+                        onChange={handleFileUpload}
+                        ref={fileInputRef}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                   
                   <button
                     onClick={handleSendMessage}
