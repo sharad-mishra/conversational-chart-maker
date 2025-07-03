@@ -20,7 +20,7 @@ const App = () => {
   const messagesEndRef = useRef(null);
   const chartRef = useRef(null);
 
-  const BACKEND_URL = 'http://localhost:5000/api/chart/generate';
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/chart/generate';
 
   const distinctColors = [
     '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6',
