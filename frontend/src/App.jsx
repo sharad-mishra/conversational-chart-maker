@@ -20,6 +20,8 @@ const App = () => {
   const messagesEndRef = useRef(null);
   const chartRef = useRef(null);
 
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api/chart/generate';
+
   const distinctColors = [
     '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6',
     '#ec4899', '#14b8a6', '#f97316', '#8b5cf6', '#22c55e',
@@ -43,7 +45,7 @@ const App = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/chart/generate', {
+      const response = await axios.post(BACKEND_URL, {
         message: message || 'Generate chart from uploaded data',
         data: uploadedData,
       });
@@ -205,7 +207,6 @@ export default MyChart;
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Enhanced Header */}
       <header className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative container mx-auto px-6 py-8">
@@ -224,10 +225,8 @@ export default MyChart;
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 container mx-auto p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
-          {/* Chat Interface */}
           <div className="flex flex-col h-full">
             <div className="flex justify-center items-center gap-3 mb-6">
               <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
@@ -325,7 +324,6 @@ export default MyChart;
             </div>
           </div>
 
-          {/* Chart Preview & Controls */}
           <div className="flex flex-col h-full">
             <div className="flex justify-center items-center gap-3 mb-6">
               <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
